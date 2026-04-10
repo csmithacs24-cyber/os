@@ -1,0 +1,117 @@
+#include <stdio.h>
+
+struct Process {
+    int pid, arrival, burst, priority;
+    int remaining, completion, waiting, turnaround;
+};
+
+void nonPreemptive(struct Process p[], int n) {
+    int completed = 0, time = 0, min, idx;
+    int isCompleted[20] = {0};
+
+    while (completed < n) {
+        min = 9999;
+        idx = -1;
+
+        for (int i = 0; i < n; i++) {
+            if (p[i].arrival <= time && !isCompleted[i]) {
+                if (p[i].priority < min) {
+                    min = p[i].priority;
+                    idx = i;
+                }
+            }
+        }
+
+        if (idx != -1) {
+            time += p[idx].burst;
+            p[idx].completion = time;
+            p[idx].turnaround = p[idx].completion - p[idx].arrival;
+            p[idx].waiting = p[idx].turnaround - p[idx].burst;
+            isCompleted[idx] = 1;
+            completed++;
+        } else {
+            time++;
+        }
+    }
+
+    printf("\nPID\tAT\tBT\tPR\tCT\tTAT\tWT\n");
+    for (int i = 0; i < n; i++) {
+        printf("%d\t%d\t%d\t%d\t%d\t%d\t%d\n",
+               p[i].pid, p[i].arrival, p[i].burst, p[i].priority,
+               p[i].completion, p[i].turnaround, p[i].waiting);
+    }
+}
+
+void preemptive(struct Process p[], int n) {
+    int completed = 0, time = 0, min, idx;
+
+    for (int i = 0; i < n; i++)
+        p[i].remaining = p[i].burst;
+
+    while (completed < n) {
+        min = 9999;
+        idx = -1;
+
+        for (int i = 0; i < n; i++) {
+            if (p[i].arrival <= time && p[i].remaining > 0) {
+                if (p[i].priority < min) {
+                    min = p[i].priority;
+                    idx = i;
+                }
+            }
+        }
+
+        if (idx != -1) {
+            p[idx].remaining--;
+            time++;
+
+            if (p[idx].remaining == 0) {
+                p[idx].completion = time;
+                p[idx].turnaround = p[idx].completion - p[idx].arrival;
+                p[idx].waiting = p[idx].turnaround - p[idx].burst;
+                completed++;
+            }
+        } else {
+            time++;
+        }
+    }
+
+    printf("\nPID\tAT\tBT\tPR\tCT\tTAT\tWT\n");
+    for (int i = 0; i < n; i++) {
+        printf("%d\t%d\t%d\t%d\t%d\t%d\t%d\n",
+               p[i].pid, p[i].arrival, p[i].burst, p[i].priority,
+               p[i].completion, p[i].turnaround, p[i].waiting);
+    }
+}
+
+int main() {
+    struct Process p[20];
+    int n, choice;
+
+    printf("Enter number of processes: ");
+    scanf("%d", &n);
+
+    for (int i = 0; i < n; i++) {
+        p[i].pid = i + 1;
+        printf("Enter AT, BT, Priority for P%d: ", i + 1);
+        scanf("%d %d %d", &p[i].arrival, &p[i].burst, &p[i].priority);
+    }
+
+    printf("\n1. Non-Preemptive Priority Scheduling");
+    printf("\n2. Preemptive Priority Scheduling");
+    printf("\nEnter choice: ");
+    scanf("%d", &choice);
+
+    switch (choice) {
+        case 1:
+            nonPreemptive(p, n);
+            break;
+        case 2:
+            preemptive(p, n);
+            break;
+        default:
+            printf("Invalid choice!\n");
+    }
+
+    return 0;
+}
